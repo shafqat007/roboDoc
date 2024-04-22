@@ -88,7 +88,7 @@ const FetchData = ({ navigation }) => {
           <Text style={styles.addOptionText}>Add More Medicines</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.saveOptionsButton} onPress={saveOptionsToFirebase}>
-          <Text style={styles.saveOptionsText}>Save Options</Text>
+          <Text style={styles.saveOptionsText}>Save Medicine Data</Text>
         </TouchableOpacity>
         {successMessage ? <Text style={styles.successMessage}>{successMessage}</Text> : null}
       </View>
