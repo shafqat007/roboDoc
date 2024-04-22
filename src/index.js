@@ -1,15 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Picker } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Picker, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ref, set, push } from 'firebase/database';
 import { db } from '../config';
+import Icon from 'react-native-vector-icons/FontAwesome'; // Assuming you're using FontAwesome icons
 
 const FetchData = ({ navigation }) => {
-  const [options, setOptions] = useState([{ hours: '', minutes: '', period: 'AM', label: 'Medicine 1' }]);
+  const [options, setOptions] = useState([{ hours: '', minutes: '', period: 'AM', label: 'Medicine 1', time: '' }]);
   const [successMessage, setSuccessMessage] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const period = hours >= 12 ? 'PM' : 'AM';
+      setCurrentTime(`${hours}:${minutes} ${period}`);
+
+      // Check if any medicine time matches the current time
+      const match = options.find(option => option.time === currentTime);
+      if (match) {
+        // Show alert only once when the current time matches medicine time
+        setTimeout(() => {
+          Alert.alert('Take Medicine', `It's time to take ${match.label}`);
+        }, 1000); // Delay of 1 second to ensure the alert shows at the exact time
+      }
+    }, 1000); // Update time every second
+
+    return () => clearInterval(intervalId);
+  }, [currentTime, options]);
 
   const addOption = () => {
-    const newOptions = [...options, { hours: '', minutes: '', period: 'AM', label: `Medicine ${options.length + 1}` }];
+    const newOptions = [...options, { hours: '', minutes: '', period: 'AM', label: `Medicine ${options.length + 1}`, time: '' }];
     setOptions(newOptions);
   };
 
@@ -23,6 +46,17 @@ const FetchData = ({ navigation }) => {
     }
     const newOptions = [...options];
     newOptions[index][fieldName] = newValue;
+    // Set the time property based on the input hours, minutes, and period
+    newOptions[index].time = `${newOptions[index].hours}:${newOptions[index].minutes} ${newOptions[index].period}`;
+    setOptions(newOptions);
+  };
+
+  const deleteOption = (indexToDelete) => {
+    const newOptions = options.filter((_, index) => index !== indexToDelete);
+    // Update labels
+    for (let i = indexToDelete; i < newOptions.length; i++) {
+      newOptions[i].label = `Medicine ${i + 1}`;
+    }
     setOptions(newOptions);
   };
 
@@ -54,6 +88,13 @@ const FetchData = ({ navigation }) => {
       <View style={styles.optionsContainer}>
         {options.map((option, index) => (
           <View key={index} style={styles.optionRow}>
+            <Icon
+              name="minus"
+              size={20}
+              color="#ffffff"
+              style={styles.deleteIcon}
+              onPress={() => deleteOption(index)}
+            />
             <Text style={styles.optionLabel}>{option.label}</Text>
             <View style={styles.timeInputContainer}>
               <TextInput
@@ -82,14 +123,21 @@ const FetchData = ({ navigation }) => {
                 <Picker.Item color="#000000" label="PM" value="PM" />
               </Picker>
             </View>
+            {index === options.length - 1 && (
+              <Icon
+                name="plus"
+                size={20}
+                color="#ffffff"
+                style={styles.addIcon}
+                onPress={addOption}
+              />
+            )}
           </View>
         ))}
-        <TouchableOpacity style={styles.addOptionButton} onPress={addOption}>
-          <Text style={styles.addOptionText}>Add More Medicines</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.saveOptionsButton} onPress={saveOptionsToFirebase}>
           <Text style={styles.saveOptionsText}>Save Medicine Data</Text>
         </TouchableOpacity>
+        <Text style={styles.currentTime}>{currentTime}</Text>
         {successMessage ? <Text style={styles.successMessage}>{successMessage}</Text> : null}
       </View>
     </ScrollView>
@@ -127,7 +175,7 @@ const styles = StyleSheet.create({
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start', // Align items to the start of the row
     marginBottom: 15,
     width: '100%',
   },
@@ -159,17 +207,12 @@ const styles = StyleSheet.create({
     color: '#000000',
     width: 80,
   },
-  addOptionButton: {
-    backgroundColor: '#469b82',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginTop: 20,
+  addIcon: {
+    marginLeft: 10,
+    marginRight: 10, // Adjust margin to create space between the plus icon and the last medicine item
   },
-  addOptionText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontFamily: 'Roboto',
+  deleteIcon: {
+    marginRight: 10,
   },
   saveOptionsButton: {
     backgroundColor: '#469b82',
@@ -182,6 +225,12 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontFamily: 'Roboto',
+  },
+  currentTime: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontFamily: 'Roboto',
+    marginTop: 10,
   },
   successMessage: {
     color: '#ffffff',
