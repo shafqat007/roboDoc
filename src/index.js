@@ -66,7 +66,13 @@ const FetchData = ({ navigation }) => {
         push(ref(db, 'Options'), {
           label: option.label,
           time: `${option.hours}:${option.minutes} ${option.period}`,
-        });
+        })
+          .then(() => {
+            console.log('Data pushed successfully');
+          })
+          .catch((error) => {
+            console.error('Error pushing data:', error);
+          });
       }
     });
     setSuccessMessage('Medicine saved successfully');
@@ -75,7 +81,13 @@ const FetchData = ({ navigation }) => {
       setSuccessMessage('');
     }, 3000);
     // Overwrite previous data in the database
-    set(ref(db, 'Options'), options);
+    set(ref(db, 'Options'), options)
+      .then(() => {
+        console.log('Data set successfully');
+      })
+      .catch((error) => {
+        console.error('Error setting data:', error);
+      });
   };
 
   return (
