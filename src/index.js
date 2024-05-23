@@ -75,7 +75,7 @@ const FetchData = ({ navigation }) => {
           });
       }
     });
-    setSuccessMessage('Medicine saved successfully');
+    setSuccessMessage('Medicine saved successfully!');
     // Clear success message after 3 seconds
     setTimeout(() => {
       setSuccessMessage('');
